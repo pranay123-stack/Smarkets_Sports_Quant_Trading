@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
+import pickle
 
 st.set_page_config(page_title="⚽ Betting Edge Predictor", layout="wide")
 st.title("⚽ Football Betting Strategy Simulator")
@@ -11,7 +11,7 @@ st.markdown("""
 Use Football (Soccer) data from Football-Data.co.uk
 Upload a CSV containing pre-match bookmaker odds (`B365H`, `B365D`, `B365A`).  
 This app will:
-- Predict outcomes using a trained ML model
+- Predict outcomes using a pre-trained ML model
 - Detect profitable edges
 - Simulate bets and bankroll over time
 - Plot ROI vs Edge Threshold and Bankroll Curve
@@ -36,22 +36,16 @@ if uploaded_file:
     df['book_draw_prob'] = df['odds_draw_prob'] / norm
     df['book_away_prob'] = df['odds_away_prob'] / norm
 
-    # --- Load and train model from base data ---
-    base_df = pd.read_csv("Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data\E0.csv").dropna(subset=['B365H', 'B365D', 'B365A'])
-    base_df['FTR'] = base_df['FTR'].map({'H': 0, 'D': 1, 'A': 2})
-    base_df['odds_home_prob'] = 1 / base_df['B365H']
-    base_df['odds_draw_prob'] = 1 / base_df['B365D']
-    base_df['odds_away_prob'] = 1 / base_df['B365A']
-    base_df['norm'] = base_df[['odds_home_prob', 'odds_draw_prob', 'odds_away_prob']].sum(axis=1)
-    base_df['book_home_prob'] = base_df['odds_home_prob'] / base_df['norm']
-    base_df['book_draw_prob'] = base_df['odds_draw_prob'] / base_df['norm']
-    base_df['book_away_prob'] = base_df['odds_away_prob'] / base_df['norm']
-
-    features = ['book_home_prob', 'book_draw_prob', 'book_away_prob']
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(base_df[features], base_df['FTR'])
+    # --- Load pre-trained model ---
+    try:
+        with open("Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Trained_ML_Models/model.pkl", "rb") as f:
+            model = pickle.load(f)
+    except FileNotFoundError:
+        st.error("Pre-trained model (models/model.pkl) not found. Please ensure the model file is in the repository.")
+        st.stop()
 
     # Predictions
+    features = ['book_home_prob', 'book_draw_prob', 'book_away_prob']
     probs = model.predict_proba(df[features])
     preds = model.predict(df[features])
     labels = {0: 'Home Win', 1: 'Draw', 2: 'Away Win'}

@@ -4,10 +4,18 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
+import pickle
+import os
+
+
 
 # Load data
-file_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data\E0.csv"
-df = pd.read_csv(file_path)
+file_path = r"C:\Users\prana\OneDrive\Desktop\Zelta_Labs\Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data\E0.csv"  # Use relative path
+try:
+    df = pd.read_csv(file_path)
+except FileNotFoundError:
+    print(f"Error: File '{file_path}' not found. Ensure 'E0.csv' is in the 'Data' folder.")
+    exit(1)
 
 # Keep only required columns
 df = df[['FTR', 'B365H', 'B365D', 'B365A']].dropna()
@@ -37,6 +45,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 # Train model
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
+
+# Save the trained model
+with open("Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Trained_ML_Models/model.pkl", "wb") as f:
+    pickle.dump(model, f)
+print("Model saved to models/model.pkl")
 
 # Predict on test set
 y_pred = model.predict(X_test)

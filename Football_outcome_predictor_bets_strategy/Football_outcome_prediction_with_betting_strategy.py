@@ -3,9 +3,16 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
+import pickle
+import os
 
 # === Load and preprocess data ===
-df = pd.read_csv("Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data\E0.csv")  # Make sure this path is correct
+file_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data/E0.csv"  # Use relative path
+try:
+    df = pd.read_csv(file_path)
+except FileNotFoundError:
+    print(f"Error: File '{file_path}' not found. Ensure 'E0.csv' is in the 'Data' folder.")
+    exit(1)
 
 # Keep necessary columns
 df = df[['FTR', 'B365H', 'B365D', 'B365A']].dropna()
@@ -35,9 +42,14 @@ X_train, X_test, y_train, y_test, odds_train, odds_test = train_test_split(
     X, y, odds_df, test_size=0.2, random_state=42
 )
 
-# === Train model ===
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+# === Load pre-trained model ===
+try:
+    with open("Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Trained_ML_Models/model.pkl", "rb") as f:
+        model = pickle.load(f)
+    print("Pre-trained model loaded from models/model.pkl")
+except FileNotFoundError:
+    print("Error: Pre-trained model (models/model.pkl) not found. Please ensure the model file exists.")
+    exit(1)
 
 # === Predict probabilities ===
 probs = model.predict_proba(X_test)
@@ -107,6 +119,7 @@ print(f"💼 Final Bankroll: ₹{round(bankroll, 2)}")
 print(f"📊 ROI: {roi:.2f}%")
 print(f"🎯 Bets Placed: {len(bet_df)}")
 
-# Save results
-bet_df.to_csv("Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy/betting_simulation_log.csv", index=False)
-print("\n📁 Log saved to: betting_simulation_log.csv")
+# Save results with relative path
+output_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy/betting_simulation_log.csv"
+bet_df.to_csv(output_path, index=False)
+print(f"\n📁 Log saved to: {output_path}")
