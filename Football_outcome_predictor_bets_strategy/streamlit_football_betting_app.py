@@ -9,7 +9,7 @@ st.set_page_config(page_title="⚽ Betting Edge Predictor", layout="wide")
 st.title("⚽ Football Betting Strategy Simulator")
 
 st.markdown("""
-Use Football (Soccer) data from [Football-Data.co.uk](https://www.football-data.co.uk/).
+Use Football (Soccer) data from [Football-Data.co.uk](https://www.football-data.co.uk/data.php).
 This app uses a pre-trained RandomForest model to:
 - **Predict outcomes** and simulate bets on uploaded odds data (`B365H`, `B365D`, `B365A`).
 - **Simulate a betting strategy** on historical data with actual results (`FTR`, `B365H`, `B365D`, `B365A`).
