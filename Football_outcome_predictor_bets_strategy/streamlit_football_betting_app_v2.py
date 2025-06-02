@@ -16,8 +16,8 @@ This app uses a pre-trained RandomForest model to:
 - **Simulate a betting strategy** on historical data with actual results (`FTR`, `B365H`, `B365D`, `B365A`).
 """)
 
-# Define model path
-model_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Trained_ML_Models/model.pkl"
+# Define model path relative to the repository's root
+model_path = os.path.join("Smarkets_Sports_Quant_Trading", "Football_outcome_predictor_bets_strategy", "Trained_ML_Models", "model.pkl")
 
 # Load pre-trained model
 try:
@@ -25,7 +25,7 @@ try:
         model = pickle.load(f)
     st.success(f"✅ Pre-trained model loaded from {model_path}")
 except FileNotFoundError:
-    st.error(f"❌ Pre-trained model not found at {model_path}. Please ensure 'model.pkl' exists in the specified directory.")
+    st.error(f"❌ Pre-trained model not found at {model_path}. Please ensure 'model.pkl' exists in Smarkets_Sports_Quant_Trading/Football_outcome_predictor_bets_strategy/Trained_ML_Models/ within the repository.")
     st.stop()
 except Exception as e:
     st.error(f"❌ Error loading model: {e}")
