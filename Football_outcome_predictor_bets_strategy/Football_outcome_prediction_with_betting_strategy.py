@@ -1,17 +1,14 @@
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix
 import pickle
 import os
 
 # === Load and preprocess data ===
-file_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data/E0.csv"  # Use relative path
+file_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data\E3.csv"  # Use relative path
 try:
     df = pd.read_csv(file_path)
 except FileNotFoundError:
-    print(f"Error: File '{file_path}' not found. Ensure 'E0.csv' is in the 'Data' folder.")
+    print(f"Error: File '{file_path}' not found. Ensure 'E1.csv' is in the 'Data' folder.")
     exit(1)
 
 # Keep necessary columns
@@ -25,56 +22,47 @@ df['odds_home_prob'] = 1 / df['B365H']
 df['odds_draw_prob'] = 1 / df['B365D']
 df['odds_away_prob'] = 1 / df['B365A']
 
-# Normalize probabilities (to remove overround)
+# Normalize probabilities
 df['norm'] = df['odds_home_prob'] + df['odds_draw_prob'] + df['odds_away_prob']
 df['book_home_prob'] = df['odds_home_prob'] / df['norm']
 df['book_draw_prob'] = df['odds_draw_prob'] / df['norm']
 df['book_away_prob'] = df['odds_away_prob'] / df['norm']
 
-# Define features and target
+# Define features, target, and odds
 features = ['book_home_prob', 'book_draw_prob', 'book_away_prob']
 X = df[features]
 y = df['FTR']
-odds_df = df[['B365H', 'B365D', 'B365A']]  # For odds reference later
-
-# === Train-test split ===
-X_train, X_test, y_train, y_test, odds_train, odds_test = train_test_split(
-    X, y, odds_df, test_size=0.2, random_state=42
-)
+odds_df = df[['B365H', 'B365D', 'B365A']]
 
 # === Load pre-trained model ===
+model_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Trained_ML_Models\model.pkl"
 try:
-    with open("Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Trained_ML_Models/model.pkl", "rb") as f:
+    with open(model_path, "rb") as f:
         model = pickle.load(f)
-    print("Pre-trained model loaded from models/model.pkl")
+    print(f"Pre-trained model loaded from {model_path}")
 except FileNotFoundError:
-    print("Error: Pre-trained model (models/model.pkl) not found. Please ensure the model file exists.")
+    print(f"Error: Pre-trained model ({model_path}) not found.")
     exit(1)
 
 # === Predict probabilities ===
-probs = model.predict_proba(X_test)
+probs = model.predict_proba(X)
 
 # === Simulate betting strategy ===
 stake = 100
 bankroll = 10000
-min_edge = 0.05  # minimum model edge vs bookmaker implied prob
-
+min_edge = 0.05
 total_profit = 0
 bet_log = []
 labels = {0: 'Home Win', 1: 'Draw', 2: 'Away Win'}
 
-for i in range(len(X_test)):
-    row = X_test.iloc[i]
-    odds = odds_test.iloc[i]
+for i in range(len(X)):
+    row = X.iloc[i]
+    odds = odds_df.iloc[i]
     pred_prob = probs[i]
-    actual = y_test.iloc[i]
+    actual = y.iloc[i]
 
     # Implied bookmaker probabilities
-    implied_probs = [
-        1 / odds['B365H'],
-        1 / odds['B365D'],
-        1 / odds['B365A']
-    ]
+    implied_probs = [1 / odds['B365H'], 1 / odds['B365D'], 1 / odds['B365A']]
     norm = sum(implied_probs)
     implied_probs = [x / norm for x in implied_probs]
 
@@ -89,10 +77,7 @@ for i in range(len(X_test)):
 
     if selected_outcome is not None:
         price = odds.iloc[selected_outcome]
-        if selected_outcome == actual:
-            profit = (price - 1) * stake
-        else:
-            profit = -stake
+        profit = (price - 1) * stake if selected_outcome == actual else -stake
         total_profit += profit
         bankroll += profit
 
@@ -106,10 +91,8 @@ for i in range(len(X_test)):
             'Bankroll': round(bankroll, 2)
         })
 
-# === Convert to DataFrame and save ===
+# === Save results ===
 bet_df = pd.DataFrame(bet_log)
-
-# Print summary
 print("\n=== Betting Simulation Log ===\n")
 print(bet_df)
 
@@ -119,7 +102,6 @@ print(f"💼 Final Bankroll: ₹{round(bankroll, 2)}")
 print(f"📊 ROI: {roi:.2f}%")
 print(f"🎯 Bets Placed: {len(bet_df)}")
 
-# Save results with relative path
-output_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy/betting_simulation_log.csv"
+output_path = os.path.join("betting_simulation_log.csv")
 bet_df.to_csv(output_path, index=False)
 print(f"\n📁 Log saved to: {output_path}")

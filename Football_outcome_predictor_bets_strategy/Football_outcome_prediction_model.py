@@ -10,7 +10,7 @@ import os
 
 
 # Load data
-file_path = r"C:\Users\prana\OneDrive\Desktop\Zelta_Labs\Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data\E0.csv"  # Use relative path
+file_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Data\E0.csv"  # Use relative path
 try:
     df = pd.read_csv(file_path)
 except FileNotFoundError:

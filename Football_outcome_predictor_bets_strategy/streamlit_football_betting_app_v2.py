@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import os
 from io import BytesIO
 
 # Set page configuration
@@ -15,16 +16,27 @@ This app uses a pre-trained RandomForest model to:
 - **Simulate a betting strategy** on historical data with actual results (`FTR`, `B365H`, `B365D`, `B365A`).
 """)
 
-# File uploaders
-st.subheader("📂 Upload Files")
-col1, col2 = st.columns(2)
-with col1:
-    data_file = st.file_uploader("Upload CSV file (e.g., E3.csv)", type=["csv"])
-with col2:
-    model_file = st.file_uploader("Upload pre-trained model (model.pkl)", type=["pkl"])
+# Define model path
+model_path = "Smarkets_Sports_Quant_Trading\Football_outcome_predictor_bets_strategy\Trained_ML_Models/model.pkl"
 
-# Check if both files are uploaded
-if data_file is not None and model_file is not None:
+# Load pre-trained model
+try:
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+    st.success(f"✅ Pre-trained model loaded from {model_path}")
+except FileNotFoundError:
+    st.error(f"❌ Pre-trained model not found at {model_path}. Please ensure 'model.pkl' exists in the specified directory.")
+    st.stop()
+except Exception as e:
+    st.error(f"❌ Error loading model: {e}")
+    st.stop()
+
+# File uploader for CSV
+st.subheader("📂 Upload Data")
+data_file = st.file_uploader("Upload CSV file (e.g., E3.csv)", type=["csv"])
+
+# Check if file is uploaded
+if data_file is not None:
     # Load CSV data
     try:
         df = pd.read_csv(data_file)
@@ -37,14 +49,6 @@ if data_file is not None and model_file is not None:
     required_columns = ['FTR', 'B365H', 'B365D', 'B365A']
     if not all(col in df.columns for col in required_columns):
         st.error(f"❌ CSV must contain columns: {', '.join(required_columns)}")
-        st.stop()
-
-    # Load pre-trained model
-    try:
-        model = pickle.load(model_file)
-        st.success("✅ Pre-trained model uploaded successfully!")
-    except Exception as e:
-        st.error(f"❌ Error loading model file: {e}")
         st.stop()
 
     # Preprocess data
@@ -135,7 +139,6 @@ if data_file is not None and model_file is not None:
     st.markdown(f"""
     ### 📈 Summary
     - **Total Profit**: ₹{round(total_profit, 2)}  
- [Indian Rupee](https://en.wikipedia.org/wiki/Indian_rupee)  
     - **Final Bankroll**: ₹{round(bankroll, 2)}  
     - **ROI**: {roi:.2f}%  
     - **Bets Placed**: {len(bet_df)}
@@ -152,4 +155,4 @@ if data_file is not None and model_file is not None:
         mime="text/csv"
     )
 else:
-    st.info("📤 Please upload both a CSV file and a pre-trained model file (model.pkl) to start the simulation.")
+    st.info("📤 Please upload a CSV file to start the simulation.")

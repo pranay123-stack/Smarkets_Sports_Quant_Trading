@@ -8,7 +8,7 @@ st.set_page_config(page_title="⚽ Arbitrage Detector", layout="wide")
 st.title("⚽ Market Inefficiency Arbitrage Detector")
 
 st.markdown("""
-Use Football (Soccer) data from Football-Data.co.uk
+Use Football (Soccer) data from [Football-Data.co.uk](https://www.football-data.co.uk/).
 Upload a CSV file (e.g. `E0.csv`) with bookmaker odds: `B365H`, `B365D`, `B365A`.  
 This app will train a predictive model, compare model vs market probabilities, detect value bets,
 and simulate bankroll growth over time.
