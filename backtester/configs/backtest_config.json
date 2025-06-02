@@ -1,0 +1,16 @@
+{
+  "data_path": "data/E0.csv",
+  "normalize_columns": ["B365H", "B365D", "B365A", "FTHG", "FTAG"],
+  "risk": {
+    "initial_bankroll": 10000,
+    "max_drawdown_pct": 0.25,
+    "kelly_fraction": 0.5,
+    "max_loss_streak": 4,
+    "dynamic_bet_size": true
+  },
+  "strategy": {
+    "name": "ArbitrageStrategy",
+    "min_edge": 0.05,
+    "odds_fields": ["B365H", "B365D", "B365A"]
+  }
+}

@@ -1,0 +1,74 @@
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+import pandas as pd
+import numpy as np
+from smarkets_Sports_Quant_Trading.backtester.strategies.strategy_interface.ml_model_strategy_inteface import MLModelStrategyInterface
+
+class MLStrategy2(MLModelStrategyInterface):
+    """ML betting strategy with statistical and probabilistic models for sports outcome prediction."""
+    
+    def __init__(self, df: pd.DataFrame, label_col: str = 'is_home_win'):
+        """Initialize the strategy with a DataFrame and target label column.
+        
+        Args:
+            df (pd.DataFrame): Input data for training and prediction.
+            label_col (str): Name of the target label column (e.g., 'is_home_win').
+        """
+        self.df = df.copy()
+        self.label_col = label_col
+        self.model_dict = {
+            'GradientBoosting': GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=42),
+            'NaiveBayes': GaussianNB(),
+            'L1LogisticRegression': LogisticRegression(penalty='l1', solver='liblinear', max_iter=1000, random_state=42)
+        }
+        self.trained_models = {}
+    
+    def train_models(self, features: list):
+        """Train the models using the specified features.
+        
+        Args:
+            features (list): List of feature column names to use for training.
+        """
+        X = self.df[features]
+        y = self.df[self.label_col]
+        for name, model in self.model_dict.items():
+            model.fit(X, y)
+            self.trained_models[name] = model
+    
+    def predict(self, row: pd.Series, features: list, model_name: str = 'GradientBoosting', **kwargs) -> tuple:
+        """Make a betting prediction for a single row using the specified model with Kelly Criterion stake sizing.
+        
+        Args:
+            row (pd.Series): Input row for prediction.
+            features (list): List of feature column names.
+            model_name (str): Name of the model to use for prediction.
+            **kwargs: Additional arguments, e.g., odds (default=2.0), min_prob (default=0.6), bankroll (default=1000).
+            
+        Returns:
+            tuple: (bet, odds, stake) where bet is 'home', 'away', or None.
+        """
+        odds = kwargs.get('odds', 2.0)
+        min_prob = kwargs.get('min_prob', 0.6)
+        bankroll = kwargs.get('bankroll', 1000)
+        
+        if model_name not in self.trained_models:
+            return (None, 0, 0)
+        
+        X_row = row[features].values.reshape(1, -1)
+        prob = self.trained_models[model_name].predict_proba(X_row)[0]
+        # Assuming binary classification: prob[1] is probability of home win, prob[0] is away win
+        
+        def kelly_stake(prob_win: float, odds: float, bankroll: float) -> float:
+            """Calculate stake using Kelly Criterion."""
+            edge = prob_win * (odds - 1) - (1 - prob_win)
+            fraction = edge / (odds - 1) if odds > 1 else 0
+            return max(0, min(bankroll * fraction, bankroll * 0.1))  # Cap at 10% of bankroll
+        
+        if prob[1] > min_prob:
+            stake = kelly_stake(prob[1], odds, bankroll)
+            return ('home', odds, round(stake, 2))
+        elif prob[0] > min_prob:
+            stake = kelly_stake(prob[0], odds, bankroll)
+            return ('away', odds, round(stake, 2))
+        return (None, 0, 0)
