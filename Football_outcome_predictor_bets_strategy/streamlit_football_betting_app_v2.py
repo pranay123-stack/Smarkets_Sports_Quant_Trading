@@ -18,23 +18,22 @@ This app uses a pre-trained RandomForest model to:
 
 # Dynamically determine the repository root and model path
 def get_model_path():
-    # Get the directory of the current script (streamlit_football_betting_app.py)
+    # Get the directory of the current script (Football_outcome_predictor_bets_strategy)
     app_dir = os.path.dirname(os.path.abspath(__file__))
     # Move up one level to Smarkets_Sports_Quant_Trading (repo root)
     repo_root = os.path.dirname(app_dir)
     # Construct path to model.pkl relative to repo root
     model_path = os.path.join(repo_root, "Football_outcome_predictor_bets_strategy", "Trained_ML_Models", "model.pkl")
     
-    # Fallback to relative path from app directory
+    # Fallback: Try case-insensitive or common variations
     fallback_path = os.path.join(app_dir, "Trained_ML_Models", "model.pkl")
+    lowercase_path = os.path.join(repo_root, "football_outcome_predictor_bets_strategy", "trained_ml_models", "model.pkl")
     
     # Return the first valid path
-    if os.path.exists(model_path):
-        return model_path
-    elif os.path.exists(fallback_path):
-        return fallback_path
-    else:
-        return model_path  # Return primary path for error message
+    for path in [model_path, fallback_path, lowercase_path]:
+        if os.path.exists(path):
+            return path
+    return model_path  # Return primary path for error message
 
 # Get model path
 model_path = get_model_path()
