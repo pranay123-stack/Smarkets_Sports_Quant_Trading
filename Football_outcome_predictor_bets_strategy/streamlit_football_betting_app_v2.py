@@ -16,8 +16,28 @@ This app uses a pre-trained RandomForest model to:
 - **Simulate a betting strategy** on historical data with actual results (`FTR`, `B365H`, `B365D`, `B365A`).
 """)
 
-# Define model path relative to streamlit_football_betting_app.py
-model_path = os.path.join("Trained_ML_Models", "model.pkl")
+# Dynamically determine the repository root and model path
+def get_model_path():
+    # Get the directory of the current script (streamlit_football_betting_app.py)
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    # Move up one level to Smarkets_Sports_Quant_Trading (repo root)
+    repo_root = os.path.dirname(app_dir)
+    # Construct path to model.pkl relative to repo root
+    model_path = os.path.join(repo_root, "Football_outcome_predictor_bets_strategy", "Trained_ML_Models", "model.pkl")
+    
+    # Fallback to relative path from app directory
+    fallback_path = os.path.join(app_dir, "Trained_ML_Models", "model.pkl")
+    
+    # Return the first valid path
+    if os.path.exists(model_path):
+        return model_path
+    elif os.path.exists(fallback_path):
+        return fallback_path
+    else:
+        return model_path  # Return primary path for error message
+
+# Get model path
+model_path = get_model_path()
 
 # Debug: Display the resolved model path
 st.write(f"Attempting to load model from: {os.path.abspath(model_path)}")
@@ -28,7 +48,7 @@ try:
         model = pickle.load(f)
     st.success(f"✅ Pre-trained model loaded from {model_path}")
 except FileNotFoundError:
-    st.error(f"❌ Pre-trained model not found at {model_path}. Please ensure 'model.pkl' exists in Football_outcome_predictor_bets_strategy/Trained_ML_Models/ within the repository.")
+    st.error(f"❌ Pre-trained model not found at {model_path}. Please ensure 'model.pkl' exists in Smarkets_Sports_Quant_Trading/Football_outcome_predictor_bets_strategy/Trained_ML_Models/ within the repository.")
     st.stop()
 except Exception as e:
     st.error(f"❌ Error loading model: {e}")
